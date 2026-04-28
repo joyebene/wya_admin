@@ -36,7 +36,7 @@ const api = {
             if (!refreshToken) {
                 console.log('No refresh token available. Logging out.');
                 clearTokens();
-                window.location.href = '/admin/index.html';
+                window.location.href = '/index.html';
                 throw new Error('Session expired');
             }
 
@@ -57,7 +57,7 @@ const api = {
             } else {
                 console.log('Refresh failed. Logging out...');
                 clearTokens();
-                window.location.href = '/admin/index.html';
+                window.location.href = '/index.html';
                 throw new Error('Session expired');
             }
         }
@@ -159,6 +159,6 @@ const api = {
             }
         }
         clearTokens(); // Always clear local tokens
-        window.location.href = '/admin/index.html';
+        window.location.href = '/index.html';
     }
 };

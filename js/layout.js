@@ -23,8 +23,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Check for access token. If not present, redirect to login.
     // This check should happen before any layout is rendered.
     const accessToken = localStorage.getItem('accessToken');
-    if (!accessToken && !window.location.pathname.endsWith('admin/index.html')) {
-        window.location.href = 'admin/index.html';
+    if (!accessToken && !window.location.pathname.endsWith('index.html')) {
+        window.location.href = 'index.html';
         return; // Stop execution to prevent rendering the layout
     }
 
