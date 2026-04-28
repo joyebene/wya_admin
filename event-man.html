@@ -256,8 +256,12 @@
                         let registrations = [];
 
                         try {
-                            registrations = await api.get(`/admin/events/${event.id}/registrations`);
-                            if (!Array.isArray(registrations)) registrations = [];
+                            // The API returns the full event object with the registrations nested inside
+                            const eventWithRegistrations = await api.get(`/admin/events/${event.id}/registrations`);
+                            // We need to access the 'registered_workers' property
+                            if (eventWithRegistrations && Array.isArray(eventWithRegistrations.registered_workers)) {
+                                registrations = eventWithRegistrations.registered_workers;
+                            }
                         } catch (err) {
                             registrations = [];
                         }
