@@ -1,4 +1,4 @@
-const API_BASE_URL = 'http://localhost:5000/api/v1';
+const API_BASE_URL = 'https://wya-backend-vv7q.onrender.com/api/v1';
 
 // Helper functions for localStorage
 const storeTokens = (accessToken, refreshToken) => {
