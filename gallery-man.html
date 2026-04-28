@@ -1,0 +1,247 @@
+<!-- gallery.html -->
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gallery - Admin</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700;800&display=swap"
+        rel="stylesheet">
+
+    <style>
+        * {
+            font-family: 'Poppins', sans-serif;
+        }
+
+        body {
+            background: #f8f8f8;
+        }
+
+        .sidebar-link {
+            display: block;
+            padding: 12px 16px;
+            border-radius: 12px;
+            transition: .3s;
+            font-weight: 500;
+        }
+
+        .sidebar-link:hover {
+            background: #facc15;
+            color: #000;
+        }
+
+        .active-link {
+            background: #facc15;
+            color: #000;
+        }
+
+        .card {
+            background: #fff;
+            border-radius: 18px;
+            padding: 24px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, .05);
+        }
+
+        .btn {
+            padding: 10px 16px;
+            border-radius: 10px;
+            font-weight: 600;
+            transition: .3s;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .input {
+            width: 100%;
+            border: 1px solid #e5e7eb;
+            padding: 12px 14px;
+            border-radius: 12px;
+            outline: none;
+        }
+
+        .input:focus {
+            border-color: #facc15;
+        }
+
+        .gallery-card img {
+            transition: .4s;
+        }
+
+        .gallery-card:hover img {
+            transform: scale(1.05);
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="flex min-h-screen">
+
+        <!-- Header -->
+        <header class="bg-white px-6 md:px-10 py-5 shadow-sm flex justify-between items-center gap-4 flex-wrap">
+
+            <div>
+                <h2 class="text-2xl font-bold">Gallery</h2>
+                <p class="text-sm text-gray-500">
+                    Upload and manage campaign images
+                </p>
+            </div>
+
+
+        </header>
+
+        <!-- Content -->
+        <section class="py-6 md:py-10 space-y-8">
+
+            <!-- Stats -->
+            <div class="grid md:grid-cols-3 gap-6">
+
+                <div class="card">
+                    <p class="text-gray-500">Total Images</p>
+                    <h3 id="total-images" class="text-4xl font-bold mt-2">0</h3>
+                </div>
+
+                <div class="card">
+                    <p class="text-gray-500">This Month</p>
+                    <h3 id="this-month" class="text-4xl font-bold mt-2">0</h3>
+                </div>
+
+                <div class="card">
+                    <p class="text-gray-500">Albums</p>
+                    <h3 id="total-albums" class="text-4xl font-bold mt-2">0</h3>
+                </div>
+
+            </div>
+
+            <!-- Upload Form -->
+            <form class="card" id="gallery-form">
+
+                <h3 class="text-xl font-bold mb-6">
+                    Upload New Image
+                </h3>
+
+                <div class="grid md:grid-cols-2 gap-5">
+
+                    <input type="text" name="title" placeholder="Image Title" class="input">
+
+                    <input title="image" type="file" name="image" class="input">
+
+                    <select title="Select Category" name="category" class="input">
+                        <option>Select Category</option>
+                        <option>Campaign</option>
+                        <option>Events</option>
+                        <option>Rally</option>
+                        <option>Meetings</option>
+                    </select>
+
+                </div>
+
+                <button type="submit" class="mt-6 bg-black text-white px-6 py-3 rounded-xl font-semibold hover:bg-gray-800">
+                    Upload Now
+                </button>
+
+            </form>
+
+            <!-- Gallery Grid -->
+            <div id="gallery-list" class="grid md:grid-cols-3 gap-6"></div>
+
+            </div>
+
+        </section>
+
+    </div>
+
+    <script src="js/layout.js"></script>
+
+    <script src="js/api.js"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+
+    const galleryList = document.getElementById('gallery-list');
+    const form = document.getElementById('gallery-form');
+
+    const totalImages = document.getElementById('total-images');
+
+    const loadGallery = async () => {
+        try {
+            const images = await api.get('/admin/gallery');
+
+            galleryList.innerHTML = '';
+
+            if (!images || images.length === 0) {
+                galleryList.innerHTML = `
+                    <p class="text-gray-500 md:col-span-4 text-center">
+                        No gallery images yet.
+                    </p>
+                `;
+                totalImages.textContent = 0;
+                return;
+            }
+
+            totalImages.textContent = images.length;
+
+            images.forEach(img => {
+                const card = document.createElement('div');
+                card.className = 'card p-0 overflow-hidden gallery-card';
+
+                card.innerHTML = `
+                    <div class="overflow-hidden">
+                        <img src="${img.image_url}" class="w-full h-56 object-cover">
+                    </div>
+
+                    <div class="p-4">
+                        <h3 class="font-bold">${img.title}</h3>
+                        <p class="text-sm text-gray-500 mt-1">${img.category}</p>
+                    </div>
+                `;
+
+                galleryList.appendChild(card);
+            });
+
+        } catch (err) {
+            console.error(err);
+            galleryList.innerHTML = `
+                <p class="text-red-500 md:col-span-4 text-center">
+                    Failed to load gallery
+                </p>
+            `;
+        }
+    };
+
+    // Upload image
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        const formData = new FormData(form);
+        const button = form.querySelector('button');
+
+        button.disabled = true;
+        button.textContent = "Uploading...";
+
+        try {
+            await api.post('/admin/gallery', formData, true);
+            form.reset();
+            loadGallery();
+        } catch (err) {
+            console.error(err);
+            alert("Upload failed");
+        } finally {
+            button.disabled = false;
+            button.textContent = "Upload Now";
+        }
+    });
+
+    loadGallery();
+});
+</script>
+
+</body>
+
+</html>

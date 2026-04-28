@@ -1,0 +1,97 @@
+<!-- admin-login.html -->
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Login</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700;800&display=swap"
+        rel="stylesheet">
+    <style>
+        * {
+            font-family: 'Poppins', sans-serif
+        }
+
+        body {
+            background: linear-gradient(rgba(0, 0, 0, .65), rgba(0, 0, 0, .65)), url('img/img2.jpeg') center/cover no-repeat;
+            min-height: 100vh;
+        }
+
+        .glass {
+            background: rgba(255, 255, 255, .12);
+            -webkit-backdrop-filter: blur(14px);
+            backdrop-filter: blur(14px);
+            border: 1px solid rgba(255, 255, 255, .2);
+        }
+    </style>
+</head>
+
+<body class="flex items-center justify-center px-6">
+
+    <div class="glass w-full max-w-md rounded-2xl p-8 text-white shadow-2xl">
+        <h1 class="text-3xl font-bold mb-2">Admin Login</h1>
+        <p class="text-sm opacity-80 mb-8">Sign in to manage the platform</p>
+
+        <form id="loginForm" class="space-y-5">
+            <div id="error-message" class="text-red-500 text-sm text-center"></div>
+            <div>
+                <label for="email" class="text-sm">Email</label>
+                <input id="email" type="email" class="w-full mt-2 p-3 rounded-lg text-black outline-none"
+                    placeholder="admin@email.com" required>
+            </div>
+
+            <div>
+                <label for="password" class="text-sm">Password</label>
+                <input id="password" type="password" class="w-full mt-2 p-3 rounded-lg text-black outline-none"
+                    placeholder="********" required>
+            </div>
+
+            <button id="loginButton"
+                class="w-full bg-yellow-500 text-black font-semibold py-3 rounded-lg hover:bg-yellow-400 transition">
+                Login
+            </button>
+        </form>
+    </div>
+
+    <!-- Include the updated api.js script -->
+    <script src="js/api.js"></script>
+    <script>
+        const loginForm = document.getElementById('loginForm');
+        const emailInput = document.getElementById('email');
+        const passwordInput = document.getElementById('password');
+        const errorMessage = document.getElementById('error-message');
+        const loginButton = document.getElementById('loginButton');
+
+        loginForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            errorMessage.textContent = '';
+            loginButton.disabled = true;
+            loginButton.textContent = 'Logging in...';
+
+            const email = emailInput.value;
+            const password = passwordInput.value;
+
+            try {
+                // Use the new api.post method for login
+                const data = await api.post('/admin/login', { email, password });
+
+                if (data.accessToken) {
+                    // On success, redirect to the dashboard
+                    window.location.href = 'dashboard.html';
+                } else {
+                    // This case should ideally not be hit if the API throws an error
+                    errorMessage.textContent = data.message || 'An unknown error occurred.';
+                }
+            } catch (error) {
+                errorMessage.textContent = error.message;
+            } finally {
+                loginButton.disabled = false;
+                loginButton.textContent = 'Login';
+            }
+        });
+    </script>
+</body>
+
+</html>

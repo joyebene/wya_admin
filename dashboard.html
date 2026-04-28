@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Admin</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700;800&display=swap"
+        rel="stylesheet">
+
+    <style>
+        * {
+            font-family: 'Poppins', sans-serif;
+        }
+
+        body {
+            background: #f8f8f8;
+        }
+
+        .sidebar-link {
+            display: block;
+            padding: 12px 16px;
+            border-radius: 12px;
+            transition: .3s;
+            font-weight: 500;
+        }
+
+        .sidebar-link:hover {
+            background: #facc15;
+            color: #000;
+        }
+
+        .active-link {
+            background: #facc15;
+            color: #000;
+        }
+
+        .card {
+            background: #fff;
+            border-radius: 18px;
+            padding: 24px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, .05);
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="flex min-h-screen">
+
+        <!-- Header -->
+        <header class="bg-white px-6 md:px-10 py-5 shadow-sm">
+
+            <h2 class="text-2xl font-bold">Dashboard</h2>
+            <p class="text-sm text-gray-500">
+                Welcome back, Super Admin
+            </p>
+
+        </header>
+
+        <!-- Content -->
+        <section class="py-6 md:py-10">
+
+            <div class="grid md:grid-cols-3 gap-8">
+                <div class="card">
+                    <h3 id="total-members" class="text-xl font-bold">...</h3>
+                    <p class="text-gray-500 mt-2">Total Members</p>
+                </div>
+
+                <div class="card">
+                    <h3 id="total-events" class="text-xl font-bold">...</h3>
+                    <p class="text-gray-500 mt-2">Total Events</p>
+                </div>
+
+                <div class="card">
+                    <h3 id="total-gallery" class="text-xl font-bold">...</h3>
+                    <p class="text-gray-500 mt-2">Gallery Images</p>
+                </div>
+            </div>
+
+            <div class="mt-8 grid md:grid-cols-2 gap-8">
+                <div class="card">
+                    <h3 class="text-xl font-bold mb-4">Recent Members</h3>
+                    <div class="overflow-x-auto">
+                        <table class="w-full">
+                            <thead>
+                                <tr class="border-b">
+                                    <th class="p-3 text-left">Name</th>
+                                    <th class="p-3 text-left">Date Joined</th>
+                                </tr>
+                            </thead>
+                            <tbody id="recent-members-body">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="card">
+                    <h3 class="text-xl font-bold mb-4">Recent Events</h3>
+                    <div class="overflow-x-auto">
+                        <table class="w-full">
+                            <thead>
+                                <tr class="border-b">
+                                    <th class="p-3 text-left">Title</th>
+                                    <th class="p-3 text-left">Date</th>
+                                </tr>
+                            </thead>
+                            <tbody id="recent-events-body">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+        </section>
+
+    </div>
+
+    <script src="js/layout.js"></script>
+    <script src="js/api.js"></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            const recentMembersBody = document.getElementById('recent-members-body');
+            const recentEventsBody = document.getElementById('recent-events-body');
+            const totalMembersElem = document.getElementById('total-members');
+            const totalEventsElem = document.getElementById('total-events');
+            const totalGalleryElem = document.getElementById('total-gallery');
+
+            try {
+                const data = await api.get('/admin/dashboard-summary');
+
+                // Populate total counts
+                totalMembersElem.textContent = data.totalMembers;
+                totalEventsElem.textContent = data.totalEvents;
+                totalGalleryElem.textContent = data.totalGalleryItems;
+
+                // Populate recent members
+                recentMembersBody.innerHTML = '';
+                if (data.recentUsers.length > 0) {
+                    data.recentUsers.forEach(user => {
+                        const row = document.createElement('tr');
+                        row.classList.add('border-b');
+                        row.innerHTML = `
+                            <td class="p-3">${user.full_name}</td>
+                            <td class="p-3">${new Date(user.created_at).toLocaleDateString()}</td>
+                        `;
+                        recentMembersBody.appendChild(row);
+                    });
+                } else {
+                    recentMembersBody.innerHTML = '<tr><td colspan="2" class="p-3 text-center">No recent users</td></tr>';
+                }
+
+                // Populate recent events
+                recentEventsBody.innerHTML = '';
+                if (data.recentEvents.length > 0) {
+                    data.recentEvents.forEach(event => {
+                        const row = document.createElement('tr');
+                        row.classList.add('border-b');
+                        row.innerHTML = `
+                            <td class="p-3">${event.name}</td>
+                            <td class="p-3">${new Date(event.date).toLocaleDateString()}</td>
+                        `;
+                        recentEventsBody.appendChild(row);
+                    });
+                } else {
+                    recentEventsBody.innerHTML = '<tr><td colspan="2" class="p-3 text-center">No recent events</td></tr>';
+                }
+            } catch (error) {
+                console.error('Error fetching dashboard summary:', error.message);
+                const errorHtml = '<tr><td colspan="2" class="p-3 text-center text-red-500">Error loading data</td></tr>';
+                recentMembersBody.innerHTML = errorHtml;
+                recentEventsBody.innerHTML = errorHtml;
+            }
+        });
+    </script>
+
+</body>
+
+</html>

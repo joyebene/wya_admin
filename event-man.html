@@ -1,0 +1,334 @@
+<!-- events.html -->
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Events - Admin</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700;800&display=swap"
+        rel="stylesheet">
+
+    <style>
+        * {
+            font-family: 'Poppins', sans-serif;
+        }
+
+        body {
+            background: #f8f8f8;
+        }
+
+        .sidebar-link {
+            display: block;
+            padding: 12px 16px;
+            border-radius: 12px;
+            transition: .3s;
+            font-weight: 500;
+        }
+
+        .sidebar-link:hover {
+            background: #facc15;
+            color: #000;
+        }
+
+        .active-link {
+            background: #facc15;
+            color: #000;
+        }
+
+        .card {
+            background: white;
+            border-radius: 18px;
+            padding: 24px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, .05);
+        }
+
+        .btn {
+            padding: 10px 16px;
+            border-radius: 10px;
+            font-weight: 600;
+            transition: .3s;
+        }
+
+        .btn:hover {
+            transform: translateY(-1px);
+        }
+
+        .input {
+            width: 100%;
+            border: 1px solid #e5e7eb;
+            padding: 12px 14px;
+            border-radius: 12px;
+            outline: none;
+        }
+
+        .input:focus {
+            border-color: #facc15;
+        }
+
+        .badge {
+            padding: 6px 12px;
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        .badge-open {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .badge-soon {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .badge-ended {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="flex min-h-screen">
+
+        <!-- Main -->
+        <main class="flex-1">
+
+            <!-- Header -->
+            <header class="bg-white px-6 md:px-10 py-5 shadow-sm flex justify-between items-center gap-4 flex-wrap">
+
+                <div>
+                    <h2 class="text-2xl font-bold">Events</h2>
+                    <p class="text-sm text-gray-500">
+                        Create and manage campaign events
+                    </p>
+                </div>
+
+
+            </header>
+
+            <!-- Content -->
+            <section class="py-6 md:py-10 space-y-8">
+
+                <!-- Stats -->
+                <div class="grid md:grid-cols-3 gap-6">
+
+                    <div class="card">
+                        <p class="text-gray-500">Total Events</p>
+                        <h3 id="total-events-stat" class="text-4xl font-bold mt-2">0</h3>
+                    </div>
+
+                    <div class="card">
+                        <p class="text-gray-500">Upcoming</p>
+                        <h3 id="upcoming-events-stat" class="text-4xl font-bold mt-2">0</h3>
+                    </div>
+
+                    <div class="card">
+                        <p class="text-gray-500">Registrations</p>
+                        <h3 id="total-registrations-stat" class="text-4xl font-bold mt-2">0</h3>
+                    </div>
+
+                </div>
+
+                <!-- Add Event Form -->
+                <form class="card" id="create-event-form">
+
+                    <h3 class="text-xl font-bold mb-6">Create New Event</h3>
+
+                    <div class="grid md:grid-cols-2 gap-5">
+
+                        <input type="text" name="name" title="Event Title" placeholder="Event Title" class="input">
+
+                        <input type="date" name="date" title="Event Date" placeholder="Event Date" class="input">
+
+                        <input type="text" name="location" placeholder="Location" class="input">
+
+                        <input type="file" name="image" title="file" placeholder="file" class="input">
+
+                        <textarea name="description" placeholder="Event Description"
+                            class="input md:col-span-2 h-32 resize-none"></textarea>
+
+                    </div>
+
+                    <button type="submit"
+                        class="mt-6 bg-black text-white px-6 py-3 rounded-xl font-semibold hover:bg-gray-800">
+                        Publish Event
+                    </button>
+
+                </form>
+
+                <!-- Events List -->
+                <div id="event-list-container" class="grid md:grid-cols-3 gap-6">
+
+                </div>
+
+            </section>
+
+        </main>
+
+    </div>
+
+    <script src="js/layout.js"></script>
+
+    <script src="js/api.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const totalEventsStat = document.getElementById('total-events-stat');
+            const upcomingEventsStat = document.getElementById('upcoming-events-stat');
+            const totalRegistrationsStat = document.getElementById('total-registrations-stat');
+            const eventsListContainer = document.getElementById('event-list-container');
+            const createEventForm = document.getElementById('create-event-form');
+
+            if (createEventForm) {
+                createEventForm.addEventListener('submit', async (e) => {
+                    e.preventDefault();
+
+                    const formData = new FormData(createEventForm);
+                    const button = createEventForm.querySelector('button');
+
+                    button.disabled = true;
+                    button.textContent = "Publishing...";
+
+                    try {
+                        await api.post('/admin/events', formData, true);
+
+                        createEventForm.reset();
+                        loadEvents(); // refresh list
+                    } catch (err) {
+                        console.error(err);
+                        alert("Failed to create event");
+                    } finally {
+                        button.disabled = false;
+                        button.textContent = "Publish Event";
+                    }
+                });
+            }
+
+            const loadEvents = async () => {
+                try {
+                    const events = await api.get('/admin/events');
+                    eventsListContainer.innerHTML = '';
+
+                    if (!events || events.length === 0) {
+                        eventsListContainer.innerHTML = `
+                    <div class="md:col-span-3">
+                        <div class="card text-center py-14">
+                            <h3 class="text-2xl font-bold mb-2">No Events Yet</h3>
+                            <p class="text-gray-500">
+                                No campaign events have been created.
+                            </p>
+                        </div>
+                    </div>
+                `;
+
+                        totalEventsStat.textContent = 0;
+                        upcomingEventsStat.textContent = 0;
+                        totalRegistrationsStat.textContent = 0;
+                        return;
+                    }
+
+                    let totalRegistrations = 0;
+
+                    for (const event of events) {
+                        const eventCard = document.createElement('div');
+                        eventCard.className = 'card p-0 overflow-hidden';
+
+                        const eventDate = new Date(event.date);
+                        const formattedDate = eventDate.toLocaleDateString('en-US', {
+                            year: 'numeric',
+                            month: 'long',
+                            day: 'numeric'
+                        });
+
+                        const now = new Date();
+                        now.setHours(0, 0, 0, 0);
+
+                        const statusBadge = eventDate < now
+                            ? `<span class="badge badge-ended">Ended</span>`
+                            : `<span class="badge badge-open">Upcoming</span>`;
+
+                        let registrations = [];
+
+                        try {
+                            registrations = await api.get(`/admin/events/${event.id}/registrations`);
+                            if (!Array.isArray(registrations)) registrations = [];
+                        } catch (err) {
+                            registrations = [];
+                        }
+
+                        totalRegistrations += registrations.length;
+
+                        eventCard.innerHTML = `
+                    <img src="${event.image_url}" class="h-52 w-full object-cover">
+
+                    <div class="p-5">
+                        <div class="flex justify-between items-start gap-3">
+                            <h3 class="font-bold text-lg">${event.name}</h3>
+                            ${statusBadge}
+                        </div>
+
+                        <p class="text-sm text-gray-500 mt-3">${formattedDate}</p>
+                        <p class="text-sm text-gray-500">${event.location}</p>
+
+                        <p class="text-sm mt-4 text-gray-600">
+                            ${event.description.substring(0, 100)}...
+                        </p>
+
+                        <div class="flex gap-3 mt-5">
+                            <a href="event-details.html?id=${event.id}"
+                               class="btn bg-black text-white">
+                               View
+                            </a>
+
+                            <div class="btn bg-yellow-400 text-black">
+                                ${registrations.length} Joined
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+                        eventsListContainer.appendChild(eventCard);
+                    }
+
+                    totalEventsStat.textContent = events.length;
+
+                    const upcomingCount = events.filter(e => {
+                        const d = new Date(e.date);
+                        d.setHours(0, 0, 0, 0);
+                        return d >= new Date().setHours(0, 0, 0, 0);
+                    }).length;
+
+                    upcomingEventsStat.textContent = upcomingCount;
+                    totalRegistrationsStat.textContent = totalRegistrations;
+
+                } catch (error) {
+                    console.error(error);
+
+                    eventsListContainer.innerHTML = `
+                <div class="md:col-span-3">
+                    <div class="card text-center py-14">
+                        <h3 class="text-2xl font-bold text-red-500 mb-2">
+                            Failed to Load Events
+                        </h3>
+                        <p class="text-gray-500">
+                            Please try again later.
+                        </p>
+                    </div>
+                </div>
+            `;
+                }
+            };
+
+            loadEvents();
+        });
+    </script>
+
+</body>
+
+</html>
