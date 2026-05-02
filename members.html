@@ -99,6 +99,9 @@
             try {
                 const members = await api.get('/admin/users');
 
+                console.log(members);
+                
+
                 if (members.length === 0) {
                     tableContent = `
                         <tr>
