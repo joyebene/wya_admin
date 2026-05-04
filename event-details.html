@@ -280,6 +280,10 @@
                 if (deleteBtn) {
                     deleteBtn.addEventListener('click', async () => {
                         if (confirm('Are you sure you want to delete this event? This action cannot be undone.')) {
+                            // Disable button and show loading state
+                            deleteBtn.disabled = true;
+                            deleteBtn.textContent = 'Deleting...';
+
                             try {
                                 await api.delete(`/admin/events/${eventId}`);
                                 alert('Event deleted successfully.');
@@ -287,6 +291,9 @@
                             } catch (err) {
                                 console.error('Failed to delete event:', err);
                                 alert('Failed to delete event. Please try again.');
+                                // Re-enable button on failure
+                                deleteBtn.disabled = false;
+                                deleteBtn.textContent = 'Delete Event';
                             }
                         }
                     });
