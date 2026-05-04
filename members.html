@@ -56,13 +56,19 @@
 
             <h2 class="text-2xl font-bold">All Members</h2>
             <p class="text-sm text-gray-500">
-                View and manage all registered members
+                View, search, and manage all registered members
             </p>
 
         </header>
 
         <!-- Content -->
         <section class="py-6 md:py-10">
+
+            <!-- Search Bar -->
+            <div class="mb-6">
+                <input type="text" id="search-input" placeholder="Search by name, email, or member ID..."
+                    class="w-full p-3 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-yellow-500">
+            </div>
 
             <div class="card">
                 <div class="overflow-x-auto">
@@ -92,21 +98,26 @@
     <script src="js/api.js"></script>
     <script src="js/layout.js"></script>
     <script>
-        document.addEventListener('DOMContentLoaded', async () => {
+        document.addEventListener('DOMContentLoaded', () => {
             const tableBody = document.getElementById('members-table-body');
-            let tableContent = '';
+            const searchInput = document.getElementById('search-input');
 
-            try {
-                const members = await api.get('/admin/users');
+            // A simple debounce function to prevent API calls on every keystroke
+            const debounce = (func, delay) => {
+                let timeout;
+                return (...args) => {
+                    clearTimeout(timeout);
+                    timeout = setTimeout(() => func.apply(this, args), delay);
+                };
+            };
 
-                console.log(members);
-                
-
+            const renderMembers = (members) => {
+                let tableContent = '';
                 if (members.length === 0) {
                     tableContent = `
                         <tr>
-                            <td colspan="6" class="text-center p-6 text-gray-500">
-                                No members have registered yet.
+                            <td colspan="7" class="text-center p-6 text-gray-500">
+                                No members found.
                             </td>
                         </tr>
                     `;
@@ -133,19 +144,35 @@
                         `;
                     });
                 }
-
                 tableBody.innerHTML = tableContent;
+            };
 
-            } catch (error) {
-                console.error('Failed to fetch members:', error);
-                tableBody.innerHTML = `
-                    <tr>
-                        <td colspan="6" class="text-center p-6 text-red-500">
-                            Failed to load members. Please try again later.
-                        </td>
-                    </tr>
-                `;
-            }
+            const loadMembers = async (query = '') => {
+                try {
+                    const endpoint = query ? `/admin/users?search=${encodeURIComponent(query)}` : '/admin/users';
+                    const members = await api.get(endpoint);
+                    renderMembers(members);
+                } catch (error) {
+                    console.error('Failed to load members:', error);
+                    tableBody.innerHTML = `
+                        <tr>
+                            <td colspan="7" class="text-center p-6 text-red-500">
+                                Failed to load members. Please try again later.
+                            </td>
+                        </tr>
+                    `;
+                }
+            };
+
+            // Debounced version of loadMembers for the search input
+            const debouncedLoad = debounce(loadMembers, 300);
+
+            searchInput.addEventListener('input', (e) => {
+                debouncedLoad(e.target.value);
+            });
+
+            // Initial load of all members
+            loadMembers();
         });
     </script>
 
